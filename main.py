@@ -1,6 +1,5 @@
 from fastapi import FastAPI, Depends, Path, Query
 from fastapi.security import HTTPBearer
-from dotenv import load_dotenv
 import os
 from schema import User, Note
 from mongoengine import connect
@@ -8,9 +7,14 @@ from pydantic import BaseModel
 from typing import Annotated
 from bson.json_util import dumps
 
+# only import dotenv if running locally
+from sys import platform
+if platform == 'darwin':
+    from dotenv import load_dotenv
+    load_dotenv()
+
 
 # set up MongoDB connection
-load_dotenv()
 MONGO_URI: str = os.getenv("MONGO_DB_URI")
 if MONGO_URI == None:
     print("No MongoDB URI environment variable found.")
