@@ -1,3 +1,4 @@
 fastapi
 uvicorn
 mongoengine
+dotenv
