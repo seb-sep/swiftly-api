@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Depends, Path, Query
 from fastapi.security import HTTPBearer
+from fastapi.middleware.cors import CORSMiddleware
 import os
 from schema import User, Note
 from mongoengine import connect
@@ -24,6 +25,11 @@ connect(host=MONGO_URI)
 token_auth_scheme = HTTPBearer()
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=['*'],
+)
 
 @app.get("/")
 async def root():
