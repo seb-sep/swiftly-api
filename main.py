@@ -8,11 +8,13 @@ from typing import Annotated
 from bson.json_util import dumps
 
 # only import dotenv if running locally
+'''
 from sys import platform
 if platform == 'darwin':
     from dotenv import load_dotenv
     load_dotenv()
 
+'''
 
 # set up MongoDB connection
 MONGO_URI: str = os.getenv("MONGO_DB_URI")
