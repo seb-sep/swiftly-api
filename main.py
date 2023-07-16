@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Depends, Path, UploadFile, File
+import tempfile
 from fastapi.security import HTTPBearer
 from fastapi.middleware.cors import CORSMiddleware
 import os
@@ -7,6 +8,7 @@ from mongoengine import connect
 from pydantic import BaseModel
 from typing import Annotated
 import openai
+import io
 
 # only import dotenv if running locally
 from sys import platform
@@ -110,20 +112,23 @@ async def get_note(
     )
 
 @app.post("/transcribe")
-async def transcribe(file: UploadFile):
+async def transcribe(file: Annotated[bytes, File()]):
     print("uploading file lololol")
-    return whisper_transcribe(file.file)
+    temp = open("temp.m4a", "w+b")
+    temp.write(file)
+    temp.seek(0)
+    # Create a BufferedReader from the BinaryIO object
+    transcript = await whisper_transcribe(temp)
+    temp.close()
+    return { "response": "Got to the end of the endpoint"}
     
 
 
-def whisper_transcribe(file):
-    try:
-        transcript = openai.Audio.transcribe("whisper-1", file)
-        print(transcript)
-        return transcript
-    except Exception as e:
-        print(e)
-        return e 
+async def whisper_transcribe(file):
+    print(file)
+    transcript = openai.Audio.transcribe(model="whisper-1", file=file)
+    print(transcript)
+    return transcript
 
 
 @app.get("/private/")
