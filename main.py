@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, Path, Query
+from fastapi import FastAPI, Depends, Path, UploadFile
 from fastapi.security import HTTPBearer
 from fastapi.middleware.cors import CORSMiddleware
 import os
@@ -6,7 +6,6 @@ from schema import User, Note
 from mongoengine import connect
 from pydantic import BaseModel
 from typing import Annotated
-from bson.json_util import dumps
 
 # only import dotenv if running locally
 from sys import platform
@@ -29,7 +28,7 @@ app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
     allow_origins=['*'],
-    allow_methods=['*'],
+    tallow_methods=['*'],
     allow_headers=['*'],
 )
 
@@ -100,6 +99,11 @@ async def get_note(
         title=note.title,
         content=note.content
     )
+
+@app.post("/transcribe")
+async def transcribe(file: UploadFile):
+    print("uploading file lololol")
+    return {"file_size": len(file)}
 
 @app.get("/private/")
 async def private(token: str = Depends(token_auth_scheme)):
