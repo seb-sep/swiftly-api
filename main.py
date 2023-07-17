@@ -10,11 +10,9 @@ from typing import Annotated
 import openai
 import io
 
+from dotenv import load_dotenv
+load_dotenv()
 # only import dotenv if running locally
-from sys import platform
-if platform == 'darwin':
-    from dotenv import load_dotenv
-    load_dotenv()
 
 
 # set up MongoDB connection
