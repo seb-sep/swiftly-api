@@ -84,7 +84,7 @@ async def save_note(
     ):
     """Save the new note to the user's list."""
     user = User.objects(name=username).first()
-    new_note = Note(title=note.title, content=note.content)
+    new_note = Note(title=str(hash(note.content)), content=note.content)
     user.notes.append(new_note)
     user.save()
     return note
@@ -105,7 +105,9 @@ async def get_note(
     title: Annotated[str, Path(title="The title of the note to get")]
     ):
     user = User.objects(name=username).first()
+    print(user)
     note = next((note for note in user.notes if note.title == title), None)
+    note
     return NoteAddition(
         title=note.title,
         content=note.content
@@ -120,7 +122,7 @@ async def transcribe(file: Annotated[bytes, File()]):
     # Create a BufferedReader from the BinaryIO object
     transcript = await whisper_transcribe(temp)
     temp.close()
-    return { "response": "Got to the end of the endpoint"}
+    return transcript
     
 
 
