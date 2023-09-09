@@ -110,28 +110,3 @@ async def get_note(
         title=note.title,
         content=note.content
     )
-
-@app.post("/transcribe")
-async def transcribe(file: Annotated[bytes, File()]):
-    print("uploading file lololol")
-    temp = open("temp.m4a", "w+b")
-    temp.write(file)
-    temp.seek(0)
-    # Create a BufferedReader from the BinaryIO object
-    transcript = await whisper_transcribe(temp)
-    temp.close()
-    return transcript
-    
-
-
-async def whisper_transcribe(file):
-    print(file)
-    transcript = openai.Audio.transcribe(model="whisper-1", file=file)
-    print(transcript)
-    return transcript
-
-
-@app.get("/private/")
-async def private(token: str = Depends(token_auth_scheme)):
-    result = token.credentials
-    return result
