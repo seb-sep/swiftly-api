@@ -56,7 +56,6 @@ class UserResponse(BaseModel):
     name: str
     notes: list[NoteAddition]
 
-User.objects
 
 @app.post("/add/", response_model=UserAddition)
 async def add_user(user: UserAddition):
