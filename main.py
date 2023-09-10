@@ -11,8 +11,8 @@ import json
 from botocore.config import Config
 
 # only import dotenv if running locally
-from dotenv import load_dotenv
-load_dotenv()
+#from dotenv import load_dotenv
+#load_dotenv()
 
 
 # set up MongoDB connection
