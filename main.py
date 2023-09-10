@@ -7,7 +7,6 @@ from mongoengine import connect
 from pydantic import BaseModel
 from typing import Annotated
 import boto3
-from sagemaker.jumpstart import utils
 import json
 
 # only import dotenv if running locally
