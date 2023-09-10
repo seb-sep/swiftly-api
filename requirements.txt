@@ -2,4 +2,4 @@ fastapi
 uvicorn
 mongoengine
 python-multipart
-openai
+boto3

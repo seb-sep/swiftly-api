@@ -1,18 +1,20 @@
 from fastapi import FastAPI, Depends, Path, UploadFile, File
-import tempfile
 from fastapi.security import HTTPBearer
 from fastapi.middleware.cors import CORSMiddleware
 import os
-from schema import User, Note
+from data_schema import User, Note
 from mongoengine import connect
 from pydantic import BaseModel
 from typing import Annotated
-import openai
-import io
+import boto3
+from sagemaker.jumpstart import utils
+import json
 
 # only import dotenv if running locally
-'''from dotenv import load_dotenv
-load_dotenv()'''
+'''
+from dotenv import load_dotenv
+load_dotenv()
+'''
 
 
 # set up MongoDB connection
@@ -28,7 +30,6 @@ OPENAI_APIKEY = os.getenv("OPENAI_API_KEY")
 if OPENAI_APIKEY == None:
     print("No OpenAI key env var found.")
     exit()
-openai.api_key = OPENAI_APIKEY
 
 token_auth_scheme = HTTPBearer()
 
@@ -86,7 +87,18 @@ async def save_note(
     user.save()
     return note
 
+@app.post("/transcribe")
+async def transcribe(speech_bytes: Annotated[bytes, File()]):
+    transcript = query_endpoint(speech_bytes, 'audio/wav')
+    return transcript
+    
 
+def query_endpoint(body, content_type) -> str: 
+    endpoint_name = 'jumpstart-dft-hf-asr-whisper-small'
+    client = boto3.client('runtime.sagemaker')
+    response = client.invoke_endpoint(EndpointName=endpoint_name, ContentType=content_type, Body=body)
+    model_predictions = json.loads(response['Body'].read())
+    return model_predictions['text']
 
 
 @app.get("/{username}/notes")
