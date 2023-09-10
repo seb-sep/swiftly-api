@@ -8,12 +8,11 @@ from pydantic import BaseModel
 from typing import Annotated
 import boto3
 import json
+from botocore.config import Config
 
 # only import dotenv if running locally
-'''
 from dotenv import load_dotenv
 load_dotenv()
-'''
 
 
 # set up MongoDB connection
@@ -24,10 +23,15 @@ if MONGO_URI == None:
 connect(host=MONGO_URI)
 
 # setup opnenai api key
-
 OPENAI_APIKEY = os.getenv("OPENAI_API_KEY")
 if OPENAI_APIKEY == None:
     print("No OpenAI key env var found.")
+    exit()
+
+# set up AWS region
+AWS_REGION = os.getenv("AWS_REGION")
+if AWS_REGION == None:
+    print("No AWS region env var found.")
     exit()
 
 token_auth_scheme = HTTPBearer()
@@ -88,16 +92,17 @@ async def save_note(
 
 @app.post("/transcribe")
 async def transcribe(speech_bytes: Annotated[bytes, File()]):
-    try:
-        transcript = query_endpoint(speech_bytes, 'audio/wav')
-        return transcript
-    except Exception as e:
-        return str(e)
+    #try:
+    transcript = query_endpoint(speech_bytes, 'audio/wav')
+    return transcript
+    '''except Exception as e:
+        return str(e)'''
     
 
 def query_endpoint(body, content_type) -> str: 
     endpoint_name = 'jumpstart-dft-hf-asr-whisper-small'
-    client = boto3.client('runtime.sagemaker')
+    my_config = Config(region_name=AWS_REGION)
+    client = boto3.client('runtime.sagemaker', config=my_config)
     response = client.invoke_endpoint(EndpointName=endpoint_name, ContentType=content_type, Body=body)
     model_predictions = json.loads(response['Body'].read())
     return model_predictions['text']
