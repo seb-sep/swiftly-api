@@ -92,7 +92,7 @@ async def transcribe(speech_bytes: Annotated[bytes, File()]):
         transcript = query_endpoint(speech_bytes, 'audio/wav')
         return transcript
     except Exception as e:
-        return e
+        return str(e)
     
 
 def query_endpoint(body, content_type) -> str: 
