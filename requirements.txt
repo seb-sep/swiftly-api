@@ -3,3 +3,4 @@ uvicorn
 mongoengine
 python-multipart
 boto3
+sagemaker
