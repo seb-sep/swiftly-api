@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, Path, UploadFile, File
+from fastapi import FastAPI, Path, File, HTTPException
 from fastapi.security import HTTPBearer
 from fastapi.middleware.cors import CORSMiddleware
 import os
@@ -70,6 +70,8 @@ async def add_user(user: UserAddition):
 @app.get("/{username}", response_model=UserResponse)
 async def get_user(username: Annotated[str, Path(title="The username to query")]):
     user = User.objects(name=username).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
     return UserResponse(
         name=user.name,
         notes=list(map(lambda note: NoteAddition(
@@ -85,6 +87,8 @@ async def save_note(
     ):
     """Save the new note to the user's list."""
     user = User.objects(name=username).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
     new_note = Note(title=str(hash(note.content)), content=note.content)
     user.notes.append(new_note)
     user.save()
@@ -101,7 +105,7 @@ async def transcribe(speech_bytes: Annotated[bytes, File()]):
         transcript = query_endpoint(json.dumps(payload).encode('utf-8'), 'application/json')
         return transcript
     except Exception as e:
-        return str(e)
+        raise HTTPException(status_code=500, detail=str(e))
     
 
 def query_endpoint(body, content_type) -> str: 
@@ -118,6 +122,8 @@ async def get_note_titles(username: Annotated[str, Path(title="The username to q
     """Fetch all note titles for a given user."""
     print(username)
     user = User.objects(name=username).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
     return [note.title for note in user.notes]
 
 @app.get("/{username}/notes/{title}")
@@ -126,9 +132,11 @@ async def get_note(
     title: Annotated[str, Path(title="The title of the note to get")]
     ):
     user = User.objects(name=username).first()
-    print(user)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
     note = next((note for note in user.notes if note.title == title), None)
-    note
+    if not note:
+        raise HTTPException(status_code=404, detail="Note not found")
     return NoteAddition(
         title=note.title,
         content=note.content
