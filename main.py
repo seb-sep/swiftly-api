@@ -93,7 +93,12 @@ async def save_note(
 @app.post("/transcribe")
 async def transcribe(speech_bytes: Annotated[bytes, File()]):
     try:
-        transcript = query_endpoint(speech_bytes, 'audio/wav')
+        payload = {
+            "audio_input": speech_bytes.hex(),
+            "language": "english",
+            "task": "transcribe",
+        }
+        transcript = query_endpoint(json.dumps(payload).encode('utf-8'), 'application/json')
         return transcript
     except Exception as e:
         return str(e)
