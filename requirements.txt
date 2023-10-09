@@ -4,3 +4,4 @@ mongoengine
 python-multipart
 boto3
 openai
+ffmpeg-python

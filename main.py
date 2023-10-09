@@ -101,9 +101,11 @@ async def save_note(
     return note
 
 @app.post("/transcribe")
-async def transcribe(speech: Annotated[bytes, File()]):
-    contents = io.BytesIO(speech)
-    contents.name = 'name.m4a'
+async def transcribe(speech_bytes: Annotated[bytes, File()]):
+    contents = io.BytesIO(speech_bytes)
+    contents.name = 'name.wav'
+    # with open('name.wav', 'wb') as f:
+    #     f.write(contents.read())
     transcript = openai.Audio.transcribe('whisper-1', contents) 
     return transcript
     
