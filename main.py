@@ -1,7 +1,7 @@
-from fastapi import FastAPI, Path, File, HTTPException
-from fastapi.security import HTTPBearer
+from fastapi import FastAPI, Path, File, HTTPException, Depends, Request
+from fastapi.security import HTTPBearer, OAuth2PasswordBearer
 from fastapi.middleware.cors import CORSMiddleware
-import os
+import os, io
 from data_schema import User, Note
 from mongoengine import connect
 from pydantic import BaseModel
@@ -9,6 +9,7 @@ from typing import Annotated
 import boto3
 import json
 from botocore.config import Config
+import openai
 
 # only import dotenv if running locally
 #from dotenv import load_dotenv
@@ -23,8 +24,8 @@ if MONGO_URI == None:
 connect(host=MONGO_URI)
 
 # setup opnenai api key
-OPENAI_APIKEY = os.getenv("OPENAI_API_KEY")
-if OPENAI_APIKEY == None:
+openai.api_key = os.getenv("OPENAI_API_KEY")
+if openai.api_key == None:
     print("No OpenAI key env var found.")
     exit()
 
@@ -36,14 +37,19 @@ if AWS_REGION == None:
 
 token_auth_scheme = HTTPBearer()
 
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
 app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=['*'],
+    allow_credentials=True,
     allow_methods=['*'],
     allow_headers=['*'],
 )
+
+
 
 @app.get("/")
 async def root():
@@ -61,7 +67,7 @@ class UserResponse(BaseModel):
     notes: list[NoteAddition]
 
 
-@app.post("/add/", response_model=UserAddition)
+@app.post("/add", response_model=UserAddition)
 async def add_user(user: UserAddition):
     new_user = User(name=user.name, notes=[])
     new_user.save()
@@ -95,19 +101,13 @@ async def save_note(
     return note
 
 @app.post("/transcribe")
-async def transcribe(speech_bytes: Annotated[bytes, File()]):
-    try:
-        payload = {
-            "audio_input": speech_bytes.hex(),
-            "language": "english",
-            "task": "transcribe",
-        }
-        transcript = query_endpoint(json.dumps(payload).encode('utf-8'), 'application/json')
-        return transcript
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+async def transcribe(speech: Annotated[bytes, File()]):
+    contents = io.BytesIO(speech)
+    contents.name = 'name.m4a'
+    transcript = openai.Audio.transcribe('whisper-1', contents) 
+    return transcript
     
-
+    
 def query_endpoint(body, content_type) -> str: 
     endpoint_name = 'jumpstart-dft-hf-asr-whisper-small'
     my_config = Config(region_name=AWS_REGION)
