@@ -1,7 +1,5 @@
 fastapi
 uvicorn
-mongoengine
 python-multipart
-boto3
 openai
-ffmpeg-python
+motor

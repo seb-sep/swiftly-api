@@ -1,27 +1,16 @@
-from fastapi import FastAPI, Path, File, HTTPException, Depends, Request
+from fastapi import FastAPI, Path, File, HTTPException 
 from fastapi.security import HTTPBearer, OAuth2PasswordBearer
 from fastapi.middleware.cors import CORSMiddleware
 import os, io
 from data_schema import User, Note
-from mongoengine import connect
 from pydantic import BaseModel
 from typing import Annotated
-import boto3
 import json
-from botocore.config import Config
 import openai
-
+import queries
 # only import dotenv if running locally
 #from dotenv import load_dotenv
 #load_dotenv()
-
-
-# set up MongoDB connection
-MONGO_URI: str = os.getenv("MONGODB_URI")
-if MONGO_URI == None:
-    print("No MongoDB URI environment variable found.")
-    exit()
-connect(host=MONGO_URI)
 
 # setup opnenai api key
 openai.api_key = os.getenv("OPENAI_API_KEY")
@@ -73,9 +62,15 @@ class TitleResponse(BaseModel):
 
 @app.post("/add", response_model=UserAddition)
 async def add_user(user: UserAddition):
-    new_user = User(name=user.name, notes=[])
-    new_user.save()
-    return user
+    try:
+        id = await queries.add_user(user.name)
+        return {"name": user.name,
+                "id": str(id)}
+    except queries.DuplicateKeyError:
+        raise HTTPException(status_code=409, detail="Username already exists")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.get("/{username}", response_model=UserResponse)
 async def get_user(username: Annotated[str, Path(title="The username to query")]):
@@ -130,15 +125,6 @@ async def transcribe(speech_bytes: Annotated[bytes, File()]):
     transcript = openai.Audio.transcribe('whisper-1', contents) 
     return transcript['text'].strip('"').strip("'")
     
-    
-def query_endpoint(body, content_type) -> str: 
-    endpoint_name = 'jumpstart-dft-hf-asr-whisper-small'
-    my_config = Config(region_name=AWS_REGION)
-    client = boto3.client('runtime.sagemaker', config=my_config)
-    response = client.invoke_endpoint(EndpointName=endpoint_name, ContentType=content_type, Body=body)
-    model_predictions = json.loads(response['Body'].read())
-    return model_predictions['text']
-
 
 @app.get("/{username}/notes")
 async def get_note_titles(username: Annotated[str, Path(title="The username to query")]):

@@ -1,4 +1,3 @@
-from mongoengine import Document, EmbeddedDocument, StringField, EmbeddedDocumentListField, ObjectIdField 
 from bson import ObjectId
 class Note(EmbeddedDocument):
     id = ObjectIdField(default=ObjectId, unique=True)
