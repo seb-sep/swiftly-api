@@ -9,8 +9,8 @@ from schemas import UserAddition, NoteTitle, NoteResponse, NoteAddition
 import motor
 
 # only import dotenv if running locally
-#from dotenv import load_dotenv
-#load_dotenv()
+# from dotenv import load_dotenv
+# load_dotenv()
 
 # setup opnenai api key
 openai.api_key = os.getenv("OPENAI_API_KEY")

@@ -40,7 +40,7 @@ async def add_user_note(username: str, title: str, content: str):
     '''
 
     note = {
-        '_id': ObjectId(), # generate a new id for the note
+        'id': ObjectId(), # generate a new id for the note
         'title': title,
         'content': content,
         'created': datetime.datetime.utcnow()
