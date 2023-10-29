@@ -12,22 +12,23 @@ if MONGO_URI == None:
     print("No MongoDB URI environment variable found.")
     exit()
 
+client: motor_asyncio.AsyncIOMotorClient = None
 
 async def start_db_connection():
     '''
     Start the database connection.
     '''
     global client
-    global db
-    global users
     client = motor_asyncio.AsyncIOMotorClient(MONGO_URI)
-    db = client['test']
 
 async def close_db_connection():
     '''
     Close the database connection.
     '''
     client.close()
+
+async def get_client() -> motor_asyncio.AsyncIOMotorClient:
+    return client
 
 
 
@@ -37,13 +38,15 @@ async def add_user(username: str) -> str:
 
     :raises DuplicateKeyError if the username already exists
     '''
+    client = await get_client()
+    users = client['test']['user']
     user = {
         'name': username,
         'created': datetime.datetime.utcnow(),
         'notes': []
     }
 
-    result = await db['user'].insert_one(user)
+    result = await users.insert_one(user)
     return str(result.inserted_id)
 
 async def add_user_note(username: str, title: str, content: str):
@@ -53,13 +56,15 @@ async def add_user_note(username: str, title: str, content: str):
     :raises ValueError if the user does not exist
     '''
 
+    client = await get_client()
+    users = client['test']['user']
     note = {
         'id': ObjectId(), # generate a new id for the note
         'title': title,
         'content': content,
         'created': datetime.datetime.utcnow()
     }
-    result = await db['user'].update_one({'name': username}, {'$push': {'notes': note}})
+    result = await users.update_one({'name': username}, {'$push': {'notes': note}})
     if result.modified_count == 0:
         raise ValueError("User not found")
 
@@ -69,7 +74,10 @@ async def get_user_titles(username: str) -> List[NoteTitle]:
 
     :raises ValueError if the user does not exist
     '''
-    user = await db['user'].find_one({'name': username})
+    
+    client = await get_client()
+    users = client['test']['user']
+    user = await users.find_one({'name': username})
     if user == None:
         raise ValueError("User not found")
 
@@ -81,7 +89,10 @@ async def get_user_note(username: str, note_id: str) -> NoteResponse:
 
     :raises ValueError if the user or note does not exist
     '''
-    user = await db['user'].find_one({'name': username})
+    
+    client = await get_client()
+    users = client['test']['user']
+    user = await users.find_one({'name': username})
     if user == None:
         raise ValueError("User not found")
 

@@ -135,6 +135,6 @@ async def get_note(
         elif e.args[0] == "Note not found":
             raise HTTPException(status_code=404, detail="Note not found")
         else:
-            raise HTTPException(status_code=500, detail=str(e))
+            raise HTTPException(status_code=500, detail=str(e.args[0]))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e.args[0]))
