@@ -22,7 +22,7 @@ async def start_db_connection():
     global users
     client = motor_asyncio.AsyncIOMotorClient(MONGO_URI)
     db = client['test']
-    users = db['users']
+    users = db['user']
 
 async def close_db_connection():
     '''
