@@ -38,6 +38,9 @@ app.add_middleware(
     allow_headers=['*'],
 )
 
+app.add_event_handler("startup", queries.start_db_connection)
+app.add_event_handler("shutdown", queries.close_db_connection)
+
 
 
 @app.get("/")
