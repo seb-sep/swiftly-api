@@ -5,7 +5,7 @@ import os, io
 from typing import Annotated, List
 import openai
 import queries
-from schemas import UserAddition, NoteTitle, NoteResponse
+from schemas import UserAddition, NoteTitle, NoteResponse, NoteAddition
 import motor
 
 # only import dotenv if running locally
@@ -60,16 +60,16 @@ async def add_user(user: str):
 @app.post("/users/{username}/notes/save")
 async def save_note(
     username: Annotated[str, Path(title="The username to query")],
-    content: str
+    note: NoteAddition
     ):
     """Save the new note to the user's list."""
 
     try:
-        title = generate_note_title(content)
+        title = generate_note_title(note.content)
         await queries.add_user_note(
             username,
             title,
-            content
+            note.content
         )
     except ValueError as e:
         if e.args[0] == "User not found":
@@ -117,7 +117,7 @@ async def get_note_titles(username: Annotated[str, Path(title="The username to q
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/{username}/notes/{id}", response_model = NoteResponse)
+@app.get("/users/{username}/notes/{id}", response_model = NoteResponse)
 async def get_note(
     username: Annotated[str, Path(title="The username to query")],
     id: Annotated[str, Path(title="the object id of the note to get")]

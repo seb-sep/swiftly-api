@@ -3,3 +3,9 @@ uvicorn
 python-multipart
 openai
 motor
+langchain
+bs4 
+tiktoken 
+requests 
+lxml 
+argparse 

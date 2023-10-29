@@ -5,6 +5,8 @@ class Note(BaseModel):
     title: str
     content: str
 
+class NoteAddition(BaseModel):
+    content: str
 
 class UserAddition(BaseModel):
     name: str

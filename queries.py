@@ -2,7 +2,6 @@ import os
 from motor import motor_asyncio
 from schemas import NoteTitle, NoteResponse
 from typing import List
-import pymongo
 import datetime
 from bson.objectid import ObjectId
 
@@ -60,7 +59,7 @@ async def get_user_titles(username: str) -> List[NoteTitle]:
     if user == None:
         raise ValueError("User not found")
 
-    return [NoteTitle(title=note['title'], id=str(note['_id'])) for note in user['notes']]
+    return [NoteTitle(title=note['title'], id=str(note['id'])) for note in user['notes']]
 
 async def get_user_note(username: str, note_id: str) -> NoteResponse: 
     '''
@@ -73,7 +72,7 @@ async def get_user_note(username: str, note_id: str) -> NoteResponse:
         raise ValueError("User not found")
 
     for note in user['notes']:
-        if str(note['_id']) == note_id:
+        if str(note['id']) == note_id:
             return NoteResponse(title=note['title'], content=note['content'])
 
     raise ValueError("Note not found")
