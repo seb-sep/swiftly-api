@@ -22,7 +22,6 @@ async def start_db_connection():
     global users
     client = motor_asyncio.AsyncIOMotorClient(MONGO_URI)
     db = client['test']
-    users = db['user']
 
 async def close_db_connection():
     '''
@@ -44,7 +43,7 @@ async def add_user(username: str) -> str:
         'notes': []
     }
 
-    result = await users.insert_one(user)
+    result = await db['user'].insert_one(user)
     return str(result.inserted_id)
 
 async def add_user_note(username: str, title: str, content: str):
@@ -60,7 +59,7 @@ async def add_user_note(username: str, title: str, content: str):
         'content': content,
         'created': datetime.datetime.utcnow()
     }
-    result = await users.update_one({'name': username}, {'$push': {'notes': note}})
+    result = await db['user'].update_one({'name': username}, {'$push': {'notes': note}})
     if result.modified_count == 0:
         raise ValueError("User not found")
 
@@ -70,7 +69,7 @@ async def get_user_titles(username: str) -> List[NoteTitle]:
 
     :raises ValueError if the user does not exist
     '''
-    user = await users.find_one({'name': username})
+    user = await db['user'].find_one({'name': username})
     if user == None:
         raise ValueError("User not found")
 
@@ -82,7 +81,7 @@ async def get_user_note(username: str, note_id: str) -> NoteResponse:
 
     :raises ValueError if the user or note does not exist
     '''
-    user = await users.find_one({'name': username})
+    user = await db['user'].find_one({'name': username})
     if user == None:
         raise ValueError("User not found")
 
