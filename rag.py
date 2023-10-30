@@ -75,3 +75,10 @@ def main():
         retriever_output = query_data(query)
         print("LLM Output: ", retriever_output)
 main()
+
+'''
+Fuck langchain
+Use text davinci 003 to check whether the top 10 cosine similarity notes are relevant or not,
+then feed the ones that are into a chat completion call where the relevant notes are in the system message
+https://github.com/openai/openai-cookbook/blob/main/examples/How_to_finetune_chat_models.ipynb
+'''

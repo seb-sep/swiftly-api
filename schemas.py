@@ -6,6 +6,7 @@ class Note(BaseModel):
     content: str
 
 class NoteAddition(BaseModel):
+    user_id: str
     content: str
 
 class UserAddition(BaseModel):
