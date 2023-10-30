@@ -14,13 +14,6 @@ if MONGO_URI == None:
 
 client: motor_asyncio.AsyncIOMotorClient = None
 
-async def start_db_connection():
-    '''
-    Start the database connection.
-    '''
-    global client
-    client = motor_asyncio.AsyncIOMotorClient(MONGO_URI)
-
 async def close_db_connection():
     '''
     Close the database connection.
@@ -28,6 +21,7 @@ async def close_db_connection():
     client.close()
 
 async def get_client() -> motor_asyncio.AsyncIOMotorClient:
+    client = motor_asyncio.AsyncIOMotorClient(MONGO_URI)
     return client
 
 
@@ -76,11 +70,14 @@ async def get_user_titles(username: str) -> List[NoteTitle]:
     '''
     
     client = await get_client()
-    users = client['test']['user']
+    try:
+        users = client['test']['user']
+    except Exception as e:
+        raise ValueError("Error getting user collection from db client: " + str(e))
     user = await users.find_one({'name': username})
     if user == None:
         raise ValueError("User not found")
-
+    
     return [NoteTitle(title=note['title'], id=str(note['id'])) for note in user['notes']]
 
 async def get_user_note(username: str, note_id: str) -> NoteResponse: 

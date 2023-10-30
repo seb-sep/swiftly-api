@@ -38,7 +38,7 @@ app.add_middleware(
     allow_headers=['*'],
 )
 
-app.add_event_handler("startup", queries.start_db_connection)
+# app.add_event_handler("startup", queries.start_db_connection)
 app.add_event_handler("shutdown", queries.close_db_connection)
 
 
@@ -114,8 +114,8 @@ async def get_note_titles(username: Annotated[str, Path(title="The username to q
     try:
         notes = await queries.get_user_titles(username)
         return notes
-    except ValueError:
-        raise HTTPException(status_code=404, detail="User not found")
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=f"User not found: {e.args[0]}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
