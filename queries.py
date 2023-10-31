@@ -12,10 +12,19 @@ if MONGO_URI == None:
     print("No MongoDB URI environment variable found.")
     exit()
 
-client = motor_asyncio.AsyncIOMotorClient(MONGO_URI)
-db = client['test']
+client: motor_asyncio.AsyncIOMotorClient = None
 
-users = db["user"]
+async def close_db_connection():
+    '''
+    Close the database connection.
+    '''
+    client.close()
+
+async def get_client() -> motor_asyncio.AsyncIOMotorClient:
+    client = motor_asyncio.AsyncIOMotorClient(MONGO_URI)
+    return client
+
+
 
 async def add_user(username: str) -> str:
     '''
@@ -23,6 +32,8 @@ async def add_user(username: str) -> str:
 
     :raises DuplicateKeyError if the username already exists
     '''
+    client = await get_client()
+    users = client['test']['user']
     user = {
         'name': username,
         'created': datetime.datetime.utcnow(),
@@ -39,6 +50,8 @@ async def add_user_note(username: str, title: str, content: str):
     :raises ValueError if the user does not exist
     '''
 
+    client = await get_client()
+    users = client['test']['user']
     note = {
         'id': ObjectId(), # generate a new id for the note
         'title': title,
@@ -55,10 +68,16 @@ async def get_user_titles(username: str) -> List[NoteTitle]:
 
     :raises ValueError if the user does not exist
     '''
+    
+    client = await get_client()
+    try:
+        users = client['test']['user']
+    except Exception as e:
+        raise ValueError("Error getting user collection from db client: " + str(e))
     user = await users.find_one({'name': username})
     if user == None:
         raise ValueError("User not found")
-
+    
     return [NoteTitle(title=note['title'], id=str(note['id'])) for note in user['notes']]
 
 async def get_user_note(username: str, note_id: str) -> NoteResponse: 
@@ -67,6 +86,9 @@ async def get_user_note(username: str, note_id: str) -> NoteResponse:
 
     :raises ValueError if the user or note does not exist
     '''
+    
+    client = await get_client()
+    users = client['test']['user']
     user = await users.find_one({'name': username})
     if user == None:
         raise ValueError("User not found")
