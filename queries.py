@@ -52,8 +52,9 @@ async def add_user_note(username: str, title: str, content: str):
 
     client = await get_client()
     users = client['test']['user']
+    note_id = ObjectId()
     note = {
-        'id': ObjectId(), # generate a new id for the note
+        'id': note_id, # generate a new id for the note
         'title': title,
         'content': content,
         'created': datetime.datetime.utcnow()
@@ -61,6 +62,23 @@ async def add_user_note(username: str, title: str, content: str):
     result = await users.update_one({'name': username}, {'$push': {'notes': note}})
     if result.modified_count == 0:
         raise ValueError("User not found")
+    try:
+        result = await users.find_one({'name': username}, projection={'_id': 1})
+        user_id = result['_id']
+        await add_vector(str(user_id), note_id, content)
+    except Exception as e:
+        print(f'Error adding vector: {e}')
+
+async def add_vector(user_id: str, note_id: ObjectId, content: str):
+    '''
+    Add a vector for the given note to the note_vectors collection.i
+    '''
+
+    client = await get_client()
+    vectors = client['test']['note_vectors']
+    embedding = get_embedding(content)
+    result = await vectors.insert_one({'user_id': user_id, 'note_id': note_id, 'embedding': embedding})
+
 
 async def get_user_titles(username: str) -> List[NoteTitle]:
     '''

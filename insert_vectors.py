@@ -6,21 +6,26 @@ import tiktoken
 from queries import get_user_titles, get_user_note
 from bson import ObjectId
 from schemas import NoteResponse
+import dotenv
 
-'''
+''' 
 Fuck langchain
 Use text davinci 003 to check whether the top 10 cosine similarity notes are relevant or not,
 then feed the ones that are into a chat completion call where the relevant notes are in the system message
 https://github.com/openai/openai-cookbook/blob/main/examples/How_to_finetune_chat_models.ipynb
 '''
 
+print('Getting env values...')
+print(dotenv.dotenv_values())
+
 MONGO_URI: str = os.getenv("MONGODB_URI")
 if MONGO_URI == None:
     print("No MongoDB URI environment variable found.")
     exit()
 
-openai.api_key = os.getenv("OPENAI_API_KEY")
-if openai.api_key == None:
+OPENAI_KEY = os.getenv("OPENAI_API_KEY")
+openai.api_key = OPENAI_KEY
+if OPENAI_KEY == None:
     print("No OpenAI key env var found.")
     exit()
 
@@ -141,9 +146,11 @@ def chat_completion(query: str) -> str:
     return response['choices'][0]['message']['content']
 
 if __name__ == '__main__':
-    while True:
-        response = chat_completion(input("Enter query: "))
-        print(response)
+    dotenv.load_dotenv()
+    env = dotenv.dotenv_values()
+    print(f'Environment variables: {env}')
+    for username in ["collegestuff@gmail.com", "allenlinsh@gmail.com","dhananjai284@gmail.com"]:
+        insert_vectors(username)
 
 
 
