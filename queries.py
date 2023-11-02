@@ -99,8 +99,8 @@ async def note_chat(username: str, query: str) -> str:
 
     client = await get_client()
     users = client['test']['user']
-    user_id = await users.find_one({'name': username}, projection={'_id': 1})['_id']
-
+    user_id = await users.find_one({'name': username}, projection={'_id': 1})
+    user_id = user_id['_id']
     relevant_notes = await get_relevant_notes(str(user_id), query)
     response = await chat_completion(query, relevant_notes)
     return response
@@ -108,7 +108,7 @@ async def note_chat(username: str, query: str) -> str:
 
 async def get_relevant_notes(user_id: str, query: str) -> List[str]:
     client = await get_client()
-    vectors = client['test']['vectors']
+    vectors = client['test']['note_vectors']
     users = client['test']['user']
     embedding = get_embedding(query)
     
@@ -137,8 +137,7 @@ async def get_relevant_notes(user_id: str, query: str) -> List[str]:
         },
     ]
     
-    ids = vectors.aggregate(pipeline)
-    print(ids)
+    ids = await vectors.aggregate(pipeline).to_list(length=10)
 
     pipeline = [
         {
@@ -158,7 +157,7 @@ async def get_relevant_notes(user_id: str, query: str) -> List[str]:
         },
         {
             "$match": {
-                "id": {"$in": [note['note_id'] for note in list(ids)]}
+                "id": {"$in": [note['note_id'] for note in ids]}
             }
         },
         {
@@ -168,5 +167,5 @@ async def get_relevant_notes(user_id: str, query: str) -> List[str]:
         },
     ]
 
-    notes = users.aggregate(pipeline)
-    return [note['content'] for note in list(notes)]
+    notes = await users.aggregate(pipeline).to_list(length=10)
+    return [note['content'] for note in notes]

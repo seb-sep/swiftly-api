@@ -14,7 +14,7 @@ if openai.api_key == None:
 def transcribe_audio(audio_bytes: io.BytesIO) -> str:
     '''Transcribe the given audio file to text.'''
 
-    transcript = openai.Audio.transcribe('whisper-1', audio_bytes) 
+    transcript = openai.Audio.transcribe('whisper-1', audio_bytes)
     return transcript['text']
 
 def generate_note_title(note: str) -> str:

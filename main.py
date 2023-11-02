@@ -79,12 +79,15 @@ async def transcribe(speech_bytes: Annotated[bytes, File()]):
     transcript = transcribe_audio(contents)
     return {"text": transcript}
 
-@app.post("/users/notes/chat")
-async def chat_with_notes(speech_bytes: Annotated[bytes, File()], username: str):
+@app.post("/users/{username}/notes/chat")
+async def chat_with_notes(
+    username: Annotated[str, Path(title="The username to query")],
+    speech_bytes: Annotated[bytes, File()]):
     """Chat with the user's notes."""
     contents = io.BytesIO(speech_bytes)
     contents.name = 'name.m4a'
     transcript = transcribe_audio(contents)
+    print(transcript)
     result = await queries.note_chat(username, transcript)
     return { "text": result }
 
