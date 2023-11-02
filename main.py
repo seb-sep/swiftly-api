@@ -6,23 +6,11 @@ from typing import Annotated, List
 import openai
 import queries
 from schemas import UserAddition, NoteTitle, NoteResponse, NoteAddition
-import motor
+from inference import generate_note_title, transcribe_audio
 
 # only import dotenv if running locally
 # from dotenv import load_dotenv
 # load_dotenv()
-
-# setup opnenai api key
-openai.api_key = os.getenv("OPENAI_API_KEY")
-if openai.api_key == None:
-    print("No OpenAI key env var found.")
-    exit()
-
-# set up AWS region
-AWS_REGION = os.getenv("AWS_REGION")
-if AWS_REGION == None:
-    print("No AWS region env var found.")
-    exit()
 
 token_auth_scheme = HTTPBearer()
 
@@ -83,28 +71,26 @@ async def save_note(
         raise HTTPException(status_code=500, detail=str(e))
 
     
-def generate_note_title(note: str) -> str:
-    '''Generate a title for a note.'''
-
-    completion = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
-        messages=[
-            {"role": "system", "content": "Write a brief, unique title summarizing the following note in about four words."},
-            {"role": "user", "content": note}
-        ],
-        max_tokens=16,
-        temperature=1.5 # pick something more random to ensure uniqueness among titles
-    )
-
-    return completion.choices[0].message.content
-
 @app.post("/transcribe")
 async def transcribe(speech_bytes: Annotated[bytes, File()]):
     """Transcribe passed audio file to text."""
     contents = io.BytesIO(speech_bytes)
     contents.name = 'name.m4a'
-    transcript = openai.Audio.transcribe('whisper-1', contents) 
-    return transcript['text'].strip('"').strip("'")
+    transcript = transcribe_audio(contents)
+    return {"text": transcript}
+
+@app.post("/users/{username}/notes/chat")
+async def chat_with_notes(
+    username: Annotated[str, Path(title="The username to query")],
+    speech_bytes: Annotated[bytes, File()]):
+    """Chat with the user's notes."""
+    contents = io.BytesIO(speech_bytes)
+    contents.name = 'name.m4a'
+    transcript = transcribe_audio(contents)
+    result = await queries.note_chat(username, transcript)
+    return { "text": result }
+
+
     
 
 @app.get("/users/{username}/notes", response_model=List[NoteTitle])
@@ -130,6 +116,7 @@ async def get_note(
     try:
         return await queries.get_user_note(username, id)
     except ValueError as e:
+        print(e)
         if e.args[0] == "User not found":
             raise HTTPException(status_code=404, detail="User not found")
         elif e.args[0] == "Note not found":
@@ -137,4 +124,5 @@ async def get_note(
         else:
             raise HTTPException(status_code=500, detail=str(e.args[0]))
     except Exception as e:
+        print(e)
         raise HTTPException(status_code=500, detail=str(e.args[0]))
