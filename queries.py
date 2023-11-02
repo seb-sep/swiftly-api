@@ -89,9 +89,38 @@ async def get_user_note(username: str, note_id: str) -> NoteResponse:
     
     client = await get_client()
     users = client['test']['user']
-    note = await users.find_one({'name': username, 'notes.id': ObjectId(note_id)}, projection={'notes.title': 1, 'notes.content': 1})
-    if note == None:
-        raise ValueError("User not found")
+
+    pipeline = [
+        {
+            "$match": {
+                "name": username  
+            }
+        },
+        {
+            "$unwind": "$notes"
+        },
+        {
+            "$replaceRoot": {
+                "newRoot": "$notes"
+            }
+        },
+        {
+            "$match": {
+                "id": ObjectId(note_id)
+            }
+        },
+        {
+            "$project": {
+                "title": 1,
+                "content": 1
+            }
+        },
+    ]
+
+    result = await users.aggregate(pipeline).to_list(length=1)
+    if result == None:
+        raise ValueError("Note not found")
+    note = result[0]
     return NoteResponse(title=note['title'], content=note['content'])
 
 async def note_chat(username: str, query: str) -> str:

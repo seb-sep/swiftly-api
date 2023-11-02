@@ -87,7 +87,6 @@ async def chat_with_notes(
     contents = io.BytesIO(speech_bytes)
     contents.name = 'name.m4a'
     transcript = transcribe_audio(contents)
-    print(transcript)
     result = await queries.note_chat(username, transcript)
     return { "text": result }
 
@@ -117,6 +116,7 @@ async def get_note(
     try:
         return await queries.get_user_note(username, id)
     except ValueError as e:
+        print(e)
         if e.args[0] == "User not found":
             raise HTTPException(status_code=404, detail="User not found")
         elif e.args[0] == "Note not found":
@@ -124,4 +124,5 @@ async def get_note(
         else:
             raise HTTPException(status_code=500, detail=str(e.args[0]))
     except Exception as e:
+        print(e)
         raise HTTPException(status_code=500, detail=str(e.args[0]))
