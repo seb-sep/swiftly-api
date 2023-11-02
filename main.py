@@ -3,14 +3,10 @@ from fastapi.security import HTTPBearer, OAuth2PasswordBearer
 from fastapi.middleware.cors import CORSMiddleware
 import os, io
 from typing import Annotated, List
-import openai
 import queries
 from schemas import UserAddition, NoteTitle, NoteResponse, NoteAddition
 from inference import generate_note_title, transcribe_audio
 
-# only import dotenv if running locally
-# from dotenv import load_dotenv
-# load_dotenv()
 
 token_auth_scheme = HTTPBearer()
 
