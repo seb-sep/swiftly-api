@@ -4,7 +4,7 @@ from schemas import NoteTitle, NoteResponse
 from typing import List
 import datetime
 from bson.objectid import ObjectId
-
+from inference import get_embedding, chat_completion
 
 # set up MongoDB connection
 MONGO_URI: str = os.getenv("MONGODB_URI")
@@ -74,7 +74,7 @@ async def get_user_titles(username: str) -> List[NoteTitle]:
         users = client['test']['user']
     except Exception as e:
         raise ValueError("Error getting user collection from db client: " + str(e))
-    user = await users.find_one({'name': username})
+    user = await users.find_one({'name': username}, projection={'notes.title': 1, 'notes.id': 1})
     if user == None:
         raise ValueError("User not found")
     
@@ -89,12 +89,84 @@ async def get_user_note(username: str, note_id: str) -> NoteResponse:
     
     client = await get_client()
     users = client['test']['user']
-    user = await users.find_one({'name': username})
-    if user == None:
+    note = await users.find_one({'name': username, 'notes.id': ObjectId(note_id)}, projection={'notes.title': 1, 'notes.content': 1})
+    if note == None:
         raise ValueError("User not found")
+    return NoteResponse(title=note['title'], content=note['content'])
 
-    for note in user['notes']:
-        if str(note['id']) == note_id:
-            return NoteResponse(title=note['title'], content=note['content'])
+async def note_chat(username: str, query: str) -> str:
+    '''Take a user query and return an RAG-generated response from the user's notes.'''
 
-    raise ValueError("Note not found")
+    client = await get_client()
+    users = client['test']['user']
+    user_id = await users.find_one({'name': username}, projection={'_id': 1})['_id']
+
+    relevant_notes = await get_relevant_notes(str(user_id), query)
+    response = await chat_completion(query, relevant_notes)
+    return response
+
+
+async def get_relevant_notes(user_id: str, query: str) -> List[str]:
+    client = await get_client()
+    vectors = client['test']['vectors']
+    users = client['test']['user']
+    embedding = get_embedding(query)
+    
+    pipeline = [
+        {
+            "$vectorSearch": {
+                "path": "embedding",
+                "index": "default",
+                "queryVector": embedding,
+                "numCandidates": 100,
+                "limit": 10,
+                "filter": {
+                    "user_id": { "$in": [user_id] }
+                }
+            }
+        },
+        
+        {
+            "$project": {
+                "_id": 0,
+                "note_id": 1,
+            }
+        },
+        {
+            "$unwind": "$note_id"
+        },
+    ]
+    
+    ids = vectors.aggregate(pipeline)
+    print(ids)
+
+    pipeline = [
+        {
+            "$match": {
+                "_id": ObjectId(user_id)
+            }
+        },
+        {
+            "$unwind": {
+                "path": "$notes",
+            }
+        },
+        {
+            "$replaceRoot": {
+                "newRoot": "$notes"
+            }
+        },
+        {
+            "$match": {
+                "id": {"$in": [note['note_id'] for note in list(ids)]}
+            }
+        },
+        {
+            "$project": {
+                "content": 1
+            }
+        },
+    ]
+
+    notes = users.aggregate(pipeline)
+    return [note['content'] for note in list(notes)]
