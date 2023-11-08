@@ -91,7 +91,7 @@ async def chat_with_notes(
     """Chat with the user's notes."""
     contents = io.BytesIO(speech_bytes)
     contents.name = 'name.m4a'
-    transcript = transcribe_audio(contents)
+    transcript = await transcribe_audio(contents)
     result = await queries.note_chat(username, transcript)
     return { "text": result }
 
