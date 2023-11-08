@@ -1,4 +1,3 @@
-import openai
 from openai import AsyncOpenAI
 import os
 import io
@@ -14,11 +13,14 @@ if system() == 'Darwin':
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 client = AsyncOpenAI()
 
-def transcribe_audio(audio_bytes: io.BytesIO) -> str:
+async def transcribe_audio(audio_bytes: io.BytesIO) -> str:
     '''Transcribe the given audio file to text.'''
 
-    transcript = openai.audio.transcriptions.create('whisper-1', audio_bytes)
-    return transcript['text']
+    transcript = await client.audio.transcriptions.create(
+        model='whisper-1', 
+        file=audio_bytes,
+        response_format='text')
+    return transcript.strip()
 
 async def generate_note_title(note: str) -> str:
     '''Generate a title for a note.'''
@@ -33,14 +35,15 @@ async def generate_note_title(note: str) -> str:
         temperature=1.5 # pick something more random to ensure uniqueness among titles
     )
 
-    return completion.choices[0].message.content
+    result = completion.choices[0].message.content.replace('"', '')
+    return result
 
-async def get_embedding(content: str):
+async def get_embedding(content: str) -> List[float]:
     response = await client.embeddings.create(
         input=content,
         model='text-embedding-ada-002'
     )
-    return response['data'][0]['embedding']
+    return response.data[0].embedding
 
 async def chat_completion(query: str, relevant_notes: List[str]) -> str:
     notes = '\n'.join(relevant_notes)
@@ -54,5 +57,5 @@ async def chat_completion(query: str, relevant_notes: List[str]) -> str:
             {'role': 'user', 'content': query}
         ]
     )
-    return response['choices'][0]['message']['content']
+    return response.choices[0].message.content
 

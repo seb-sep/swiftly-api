@@ -58,7 +58,7 @@ async def save_note(
     """Save the new note to the user's list."""
 
     try:
-        title = generate_note_title(note.content)
+        title = await generate_note_title(note.content)
         await queries.add_user_note(
             username,
             title,
@@ -79,7 +79,7 @@ async def transcribe(speech_bytes: Annotated[bytes, File()]):
     contents = io.BytesIO(speech_bytes)
     contents.name = 'name.m4a'
     try:
-        transcript = transcribe_audio(contents)
+        transcript = await transcribe_audio(contents)
         return {"text": transcript}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

@@ -86,8 +86,9 @@ async def add_vector(user_id: str, note_id: ObjectId, content: str):
 
     client = await get_client()
     vectors = client['test']['note_vectors']
-    embedding = get_embedding(content)
+    embedding = await get_embedding(content)
     result = await vectors.insert_one({'user_id': user_id, 'note_id': note_id, 'embedding': embedding})
+    return result
 
 
 async def get_user_titles(username: str) -> List[NoteTitle]:
@@ -167,7 +168,7 @@ async def get_relevant_notes(user_id: str, query: str) -> List[str]:
     client = await get_client()
     vectors = client['test']['note_vectors']
     users = client['test']['user']
-    embedding = get_embedding(query)
+    embedding = await get_embedding(query)
     
     pipeline = [
         {
