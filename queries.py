@@ -12,16 +12,27 @@ if MONGO_URI == None:
     print("No MongoDB URI environment variable found.")
     exit()
 
-client: motor_asyncio.AsyncIOMotorClient = None
+client: motor_asyncio.AsyncIOMotorClient = 5
 
 async def close_db_connection():
     '''
     Close the database connection.
     '''
-    client.close()
+    try:
+        global client
+        client.close()
+    except Exception as e:
+        print(f'Error closing db connection: {e}')
+
+async def start_db_connection():
+    '''
+    Start the database connection.
+    '''
+    global client
+    client = motor_asyncio.AsyncIOMotorClient(MONGO_URI)
 
 async def get_client() -> motor_asyncio.AsyncIOMotorClient:
-    client = motor_asyncio.AsyncIOMotorClient(MONGO_URI)
+    global client
     return client
 
 

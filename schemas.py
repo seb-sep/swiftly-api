@@ -10,6 +10,9 @@ class NoteAddition(BaseModel):
 
 class UserAddition(BaseModel):
     name: str
+
+class UserAdditionResponse(BaseModel):
+    name: str
     id: str
 
 class UserResponse(BaseModel):

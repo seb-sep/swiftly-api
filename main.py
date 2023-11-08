@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import os, io
 from typing import Annotated, List
 import queries
-from schemas import UserAddition, NoteTitle, NoteResponse, NoteAddition
+from schemas import UserAddition, UserAdditionResponse, NoteTitle, NoteResponse, NoteAddition
 from inference import generate_note_title, transcribe_audio
 
 
@@ -22,7 +22,7 @@ app.add_middleware(
     allow_headers=['*'],
 )
 
-# app.add_event_handler("startup", queries.start_db_connection)
+app.add_event_handler("startup", queries.start_db_connection)
 app.add_event_handler("shutdown", queries.close_db_connection)
 
 
@@ -32,16 +32,16 @@ async def root():
     return {"message": "Hello world"}
 
 
-@app.post("/users/add", response_model=UserAddition)
-async def add_user(user: str):
+@app.post("/users/add", response_model=UserAdditionResponse)
+async def add_user(user: UserAddition):
     try:
-        id = await queries.add_user(user)
-        return UserAddition(name=user, id=str(id))
+        id = await queries.add_user(user.name)
+        return UserAdditionResponse(name=user.name, id=str(id))
     except ValueError as e:
-        if e.args[0] == "Username already exists":
+        if len(e.args) > 0 and e.args[0] == "Username already exists":
             raise HTTPException(status_code=409, detail="Username already exists")
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e.args[0]) + "some random excetion")
 
 
 @app.post("/users/{username}/notes/save")
