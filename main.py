@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Path, File, HTTPException 
+from contextlib import asynccontextmanager
 from fastapi.security import HTTPBearer, OAuth2PasswordBearer
 from fastapi.middleware.cors import CORSMiddleware
 import os, io
@@ -12,7 +13,15 @@ token_auth_scheme = HTTPBearer()
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # connect to database
+    await queries.start_db_connection()
+    yield
+    # close database connection
+    await queries.close_db_connection()
+
+app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -21,9 +30,6 @@ app.add_middleware(
     allow_methods=['*'],
     allow_headers=['*'],
 )
-
-app.add_event_handler("startup", queries.start_db_connection)
-app.add_event_handler("shutdown", queries.close_db_connection)
 
 
 

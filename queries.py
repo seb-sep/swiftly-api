@@ -12,7 +12,7 @@ if MONGO_URI == None:
     print("No MongoDB URI environment variable found.")
     exit()
 
-client: motor_asyncio.AsyncIOMotorClient = 5
+client: motor_asyncio.AsyncIOMotorClient = None
 
 async def close_db_connection():
     '''
@@ -33,9 +33,8 @@ async def start_db_connection():
 
 async def get_client() -> motor_asyncio.AsyncIOMotorClient:
     global client
+    client = motor_asyncio.AsyncIOMotorClient(MONGO_URI)
     return client
-
-
 
 async def add_user(username: str) -> str:
     '''
