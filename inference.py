@@ -1,4 +1,5 @@
 import openai
+from openai import AsyncOpenAI
 import os
 import io
 from platform import system
@@ -10,24 +11,20 @@ if system() == 'Darwin':
     load_dotenv()
 
 # setup opnenai api key
-openai.api_key = os.getenv("OPENAI_API_KEY")
-if openai.api_key == None:
-    print("No OpenAI key env var found.")
-    exit()
-
-
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+client = AsyncOpenAI()
 
 def transcribe_audio(audio_bytes: io.BytesIO) -> str:
     '''Transcribe the given audio file to text.'''
 
-    transcript = openai.Audio.transcribe('whisper-1', audio_bytes)
+    transcript = openai.audio.transcriptions.create('whisper-1', audio_bytes)
     return transcript['text']
 
-def generate_note_title(note: str) -> str:
+async def generate_note_title(note: str) -> str:
     '''Generate a title for a note.'''
 
-    completion = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
+    completion = await client.chat.completions.create(
+        model="gpt-3.5-turbo-1106",
         messages=[
             {"role": "system", "content": "Write a brief, unique title summarizing the following note in about four words."},
             {"role": "user", "content": note}
@@ -38,8 +35,8 @@ def generate_note_title(note: str) -> str:
 
     return completion.choices[0].message.content
 
-def get_embedding(content: str):
-    response = openai.Embedding.create(
+async def get_embedding(content: str):
+    response = await client.embeddings.create(
         input=content,
         model='text-embedding-ada-002'
     )
@@ -48,7 +45,7 @@ def get_embedding(content: str):
 async def chat_completion(query: str, relevant_notes: List[str]) -> str:
     notes = '\n'.join(relevant_notes)
 
-    response = openai.ChatCompletion.create(
+    response = await client.chat.completions.create(
         model='gpt-3.5-turbo',
         messages=[
             {'role': 'system', 'content': 'You are a personal assistant helping a person remember what their ideas and thoughts were.'},

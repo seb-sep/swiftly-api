@@ -78,8 +78,11 @@ async def transcribe(speech_bytes: Annotated[bytes, File()]):
     """Transcribe passed audio file to text."""
     contents = io.BytesIO(speech_bytes)
     contents.name = 'name.m4a'
-    transcript = transcribe_audio(contents)
-    return {"text": transcript}
+    try:
+        transcript = transcribe_audio(contents)
+        return {"text": transcript}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/users/{username}/notes/chat")
 async def chat_with_notes(
