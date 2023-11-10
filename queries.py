@@ -97,18 +97,26 @@ async def get_user_titles(username: str) -> List[NoteTitle]:
 
     :raises ValueError if the user does not exist
     '''
-    
+
     client = await get_client()
     try:
         users = client['test']['user']
     except Exception as e:
-        raise ValueError("Error getting user collection from db client: " + str(e))
-    user = await users.find_one({'name': username}, projection={'notes.title': 1, 'notes.id': 1})
-    if user == None:
-        raise ValueError("User not found")
-    
-    return [NoteTitle(title=note['title'], id=str(note['id'])) for note in user['notes']]
+        raise ValueError(f'Error getting user collection: {e}')
 
+    
+    pipeline = [
+        { "$match": { "name": username } },
+        { "$unwind": "$notes" },
+        { "$sort": { "notes.created": -1 } },
+        { "$project": { "notes.title": 1, "notes.id": 1 }}
+    ]
+
+    result = await users.aggregate(pipeline).to_list(length=None)
+    return [NoteTitle(title=note['notes']['title'], id=str(note['notes']['id'])) for note in result]
+
+    
+    
 async def get_user_note(username: str, note_id: str) -> NoteResponse: 
     '''
     Get the content of the note with the given id for the given user.
