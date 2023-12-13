@@ -108,7 +108,7 @@ async def get_user_titles(username: str) -> List[NoteTitle]:
     pipeline = [
         { "$match": { "name": username } },
         { "$unwind": "$notes" },
-        { "$sort": { "created": -1 } },
+        { "$sort": { "notes.created": -1 } },
         { "$project": { "_id": 0, "title": "$notes.title", "id": "$notes.id", "created": "$notes.created" }}
     ]
 
