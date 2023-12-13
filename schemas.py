@@ -20,8 +20,9 @@ class UserResponse(BaseModel):
     notes: list[Note]
 
 class NoteTitle(BaseModel):
-    title: str # the title of the note
     id: str # the id of the note
+    title: str # the title of the note
+    created: str
 
 class NoteResponse(BaseModel):
     title: str

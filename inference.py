@@ -32,7 +32,7 @@ async def generate_note_title(note: str) -> str:
             {"role": "user", "content": note}
         ],
         max_tokens=16,
-        temperature=1.5 # pick something more random to ensure uniqueness among titles
+        temperature=1.2 # pick something more random to ensure uniqueness among titles
     )
 
     result = completion.choices[0].message.content.replace('"', '')

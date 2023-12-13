@@ -108,12 +108,18 @@ async def get_user_titles(username: str) -> List[NoteTitle]:
     pipeline = [
         { "$match": { "name": username } },
         { "$unwind": "$notes" },
-        { "$sort": { "notes.created": -1 } },
-        { "$project": { "notes.title": 1, "notes.id": 1 }}
+        { "$sort": { "created": -1 } },
+        { "$project": { "_id": 0, "title": "$notes.title", "id": "$notes.id", "created": "$notes.created" }}
     ]
 
+
     result = await users.aggregate(pipeline).to_list(length=None)
-    return [NoteTitle(title=note['notes']['title'], id=str(note['notes']['id'])) for note in result]
+
+    [print(note) for note in result]
+    try:
+        return [NoteTitle(title=note['title'], id=str(note['id']), created=str(note['created'])) for note in result]
+    except Exception as e:
+        print(f'Error getting user titles: {e}')
 
     
     
