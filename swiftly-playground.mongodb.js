@@ -13,11 +13,23 @@
 use('test');
 
 
-// Fetch the document with the given name
+// add date created to each note
 db.user.find({}).forEach((doc) => {
     const updated = doc.notes.map((note) => {
         if (!note.created) {
             return { ...note, created: new Date(0) }
+        }
+        return note;
+    });
+
+    db.user.updateOne({ _id: doc._id}, { $set: { notes: updated } });
+});
+
+// add favorite to each note
+db.user.find({}).forEach((doc) => {
+    const updated = doc.notes.map((note) => {
+        if (!note.favorite) {
+            return { ...note, favorite: false }
         }
         return note;
     });

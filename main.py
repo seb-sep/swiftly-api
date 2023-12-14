@@ -131,3 +131,25 @@ async def get_note(
     except Exception as e:
         print(e)
         raise HTTPException(status_code=500, detail=str(e.args[0]))
+
+@app.delete("/users/{username}/notes/{id}")
+async def get_note(
+    username: Annotated[str, Path(title="The username to query")],
+    id: Annotated[str, Path(title="the object id of the note to get")]
+    ):
+    """Delete a given user's note."""
+
+    try:
+        await queries.del_user_note(username, id)
+        return {"success": True}
+    except ValueError as e:
+        print(e)
+        if e.args[0] == "User not found":
+            raise HTTPException(status_code=404, detail="User not found")
+        elif e.args[0] == "Note not found":
+            raise HTTPException(status_code=404, detail="Note not found")
+        else:
+            raise HTTPException(status_code=500, detail=str(e.args[0]))
+    except Exception as e:
+        print(e)
+        raise HTTPException(status_code=500, detail=str(e.args[0]))

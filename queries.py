@@ -109,15 +109,17 @@ async def get_user_titles(username: str) -> List[NoteTitle]:
         { "$match": { "name": username } },
         { "$unwind": "$notes" },
         { "$sort": { "notes.created": -1 } },
-        { "$project": { "_id": 0, "title": "$notes.title", "id": "$notes.id", "created": "$notes.created" }}
+        { "$project": { "_id": 0, "title": "$notes.title", "id": "$notes.id", "created": "$notes.created", "favorite": "$notes.favorite" }}
     ]
 
 
     result = await users.aggregate(pipeline).to_list(length=None)
 
-    [print(note) for note in result]
     try:
-        return [NoteTitle(title=note['title'], id=str(note['id']), created=str(note['created'])) for note in result]
+        return [NoteTitle(title=note['title'], 
+                          id=str(note['id']), 
+                          created=str(note['created']), 
+                          favorite=bool(note['favorite'])) for note in result]
     except Exception as e:
         print(f'Error getting user titles: {e}')
 
@@ -165,6 +167,23 @@ async def get_user_note(username: str, note_id: str) -> NoteResponse:
         raise ValueError("Note not found")
     note = result[0]
     return NoteResponse(title=note['title'], content=note['content'])
+
+async def del_user_note(username: str, note_id: str):
+    '''
+    Delete the note with the given id for the given user.
+
+    :raises ValueError if the user or note does not exist
+    '''
+    
+    client = await get_client()
+    users = client['test']['user']
+
+    
+    result = users.update_one({'name': username}, {'$pull': {'notes': {'id': ObjectId(note_id)}}})
+
+    if result == None:
+        raise ValueError("Note not found")
+
 
 async def note_chat(username: str, query: str) -> str:
     '''Take a user query and return an RAG-generated response from the user's notes.'''

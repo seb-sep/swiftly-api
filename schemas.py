@@ -23,6 +23,7 @@ class NoteTitle(BaseModel):
     id: str # the id of the note
     title: str # the title of the note
     created: str
+    favorite: bool
 
 class NoteResponse(BaseModel):
     title: str
