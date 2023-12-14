@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import os, io
 from typing import Annotated, List
 import queries
-from schemas import UserAddition, UserAdditionResponse, NoteTitle, NoteResponse, NoteAddition
+from schemas import UserAddition, UserAdditionResponse, NoteTitle, NoteResponse, NoteAddition, SetFavorite
 from inference import generate_note_title, transcribe_audio
 
 
@@ -153,3 +153,23 @@ async def get_note(
     except Exception as e:
         print(e)
         raise HTTPException(status_code=500, detail=str(e.args[0]))
+
+@app.patch("/users/{username}/notes/{id}/favorite")
+async def set_note_favorite(
+    username: Annotated[str, Path(title="The username to query")],
+    id: Annotated[str, Path(title="the object id of the note to get")],
+    favorite: SetFavorite
+    ):
+    """Set a given user's note favorite status to the passed status."""
+
+    try:
+        await queries.set_user_note_favorite(username, id, favorite.favorite)
+        return {"success": True}
+    except ValueError as e:
+        print(e)
+        if e.args[0] == "User not found":
+            raise HTTPException(status_code=404, detail="User not found")
+        elif e.args[0] == "Note not found":
+            raise HTTPException(status_code=404, detail="Note not found")
+        else:
+            raise HTTPException(status_code=500, detail=str(e.args[0]))

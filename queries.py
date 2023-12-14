@@ -157,7 +157,9 @@ async def get_user_note(username: str, note_id: str) -> NoteResponse:
         {
             "$project": {
                 "title": 1,
-                "content": 1
+                "content": 1,
+                "created": 1,
+                "favorite": 1,
             }
         },
     ]
@@ -166,7 +168,10 @@ async def get_user_note(username: str, note_id: str) -> NoteResponse:
     if result == None:
         raise ValueError("Note not found")
     note = result[0]
-    return NoteResponse(title=note['title'], content=note['content'])
+    return NoteResponse(title=note['title'], 
+                        content=note['content'], 
+                        created=str(note['created']), 
+                        favorite=bool(note['favorite']))
 
 async def del_user_note(username: str, note_id: str):
     '''
@@ -180,6 +185,22 @@ async def del_user_note(username: str, note_id: str):
 
     
     result = users.update_one({'name': username}, {'$pull': {'notes': {'id': ObjectId(note_id)}}})
+
+    if result == None:
+        raise ValueError("Note not found")
+    
+async def set_user_note_favorite(username: str, note_id: str, favorite: bool):
+    '''
+    Set the favorite status of the note with the given id for the given user.
+
+    :raises ValueError if the user or note does not exist
+    '''
+    
+    client = await get_client()
+    users = client['test']['user']
+
+    
+    result = users.update_one({'name': username, 'notes.id': ObjectId(note_id)}, {'$set': {'notes.$.favorite': favorite}})
 
     if result == None:
         raise ValueError("Note not found")

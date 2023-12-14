@@ -28,5 +28,9 @@ class NoteTitle(BaseModel):
 class NoteResponse(BaseModel):
     title: str
     content: str
+    created: str
+    favorite: bool
 
+class SetFavorite(BaseModel):
+    favorite: bool
 
