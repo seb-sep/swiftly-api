@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-
+from datetime import datetime
 
 class Note(BaseModel):
     title: str
@@ -28,7 +28,7 @@ class NoteTitle(BaseModel):
 class NoteResponse(BaseModel):
     title: str
     content: str
-    created: str
+    created: datetime
     favorite: bool
 
 class SetFavorite(BaseModel):

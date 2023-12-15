@@ -67,7 +67,8 @@ async def add_user_note(username: str, title: str, content: str):
         'id': note_id, # generate a new id for the note
         'title': title,
         'content': content,
-        'created': datetime.datetime.utcnow()
+        'created': datetime.datetime.utcnow(),
+        'favorite': False
     }
     result = await users.update_one({'name': username}, {'$push': {'notes': note}})
     if result.modified_count == 0:
