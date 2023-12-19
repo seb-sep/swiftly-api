@@ -73,22 +73,46 @@ async def save_note(
         raise HTTPException(status_code=500, detail=str(e))
 
     
-@app.post("/transcribe")
-async def transcribe(speech_bytes: Annotated[bytes, File()]):
-    """Transcribe passed audio file to text."""
+# @app.post("/transcribe")
+# async def transcribe(speech_bytes: Annotated[bytes, File()]):
+#     """Transcribe passed audio file to text."""
+#     contents = io.BytesIO(speech_bytes)
+#     contents.name = 'name.m4a'
+#     try:
+#         transcript = await transcribe_audio(contents)
+#         return {"text": transcript}
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/users/{username}/notes/transcribe")
+async def transcribe_and_save(
+    username: Annotated[str, Path()],
+    speech_bytes: Annotated[bytes, File()]):
+    """Transcribe passed audio file to text and save it to the user's notes."""
+
     contents = io.BytesIO(speech_bytes)
     contents.name = 'name.m4a'
     try:
         transcript = await transcribe_audio(contents)
+        title = await generate_note_title(transcript)
+        await queries.add_user_note(
+            username,
+            title,
+            transcript
+        )
         return {"text": transcript}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except ValueError as e:
+        if e.args[0] == "User not found":
+            raise HTTPException(status_code=404, detail="User not found")
+        else:
+            raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/users/{username}/notes/chat")
 async def chat_with_notes(
     username: Annotated[str, Path(title="The username to query")],
     speech_bytes: Annotated[bytes, File()]):
     """Chat with the user's notes."""
+
     contents = io.BytesIO(speech_bytes)
     contents.name = 'name.m4a'
     transcript = await transcribe_audio(contents)
