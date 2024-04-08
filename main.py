@@ -50,40 +50,6 @@ async def add_user(user: UserAddition):
         raise HTTPException(status_code=500, detail=str(e.args[0]) + "some random excetion")
 
 
-@app.post("/users/{username}/notes/save")
-async def save_note(
-    username: Annotated[str, Path(title="The username to query")],
-    note: NoteAddition
-    ):
-    """Save the new note to the user's list."""
-
-    try:
-        title = await generate_note_title(note.content)
-        await queries.add_user_note(
-            username,
-            title,
-            note.content
-        )
-    except ValueError as e:
-        if e.args[0] == "User not found":
-            raise HTTPException(status_code=404, detail="User not found")
-        else:
-            raise HTTPException(status_code=500, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-    
-# @app.post("/transcribe")
-# async def transcribe(speech_bytes: Annotated[bytes, File()]):
-#     """Transcribe passed audio file to text."""
-#     contents = io.BytesIO(speech_bytes)
-#     contents.name = 'name.m4a'
-#     try:
-#         transcript = await transcribe_audio(contents)
-#         return {"text": transcript}
-#     except Exception as e:
-#         raise HTTPException(status_code=500, detail=str(e))
-
 @app.post("/users/{username}/notes/transcribe")
 async def transcribe_and_save(
     username: Annotated[str, Path()],
@@ -101,6 +67,26 @@ async def transcribe_and_save(
             transcript
         )
         return {"text": transcript}
+    except ValueError as e:
+        if e.args[0] == "User not found":
+            raise HTTPException(status_code=404, detail="User not found")
+        else:
+            raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/users/{username}/notes/save")
+async def save_note(
+    username: Annotated[str, Path()],
+    note: NoteAddition,
+):
+    """Save the new note to the user's list."""
+    try:
+        title = await generate_note_title(note.content)
+        await queries.add_user_note(
+            username,
+            title,
+            note.content
+        )
+        return {"success": True}
     except ValueError as e:
         if e.args[0] == "User not found":
             raise HTTPException(status_code=404, detail="User not found")
