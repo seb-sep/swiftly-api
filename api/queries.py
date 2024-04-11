@@ -1,10 +1,10 @@
 import os
 from motor import motor_asyncio
-from schemas import NoteTitle, NoteResponse
+from api.schemas import NoteTitle, NoteResponse
 from typing import List
 import datetime
 from bson.objectid import ObjectId
-from inference import get_embedding, chat_completion
+from api.inference import get_embedding, chat_completion
 
 # set up MongoDB connection
 MONGO_URI: str = os.getenv("MONGODB_URI")

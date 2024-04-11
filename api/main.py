@@ -4,9 +4,9 @@ from fastapi.security import HTTPBearer, OAuth2PasswordBearer
 from fastapi.middleware.cors import CORSMiddleware
 import os, io
 from typing import Annotated, List
-import queries
-from schemas import UserAddition, UserAdditionResponse, NoteTitle, NoteResponse, NoteAddition, SetFavorite
-from inference import generate_note_title, transcribe_audio
+import api.queries as queries
+from api.schemas import UserAddition, UserAdditionResponse, NoteTitle, NoteResponse, NoteAddition, SetFavorite
+from api.inference import generate_note_title, transcribe_audio
 
 
 token_auth_scheme = HTTPBearer()
