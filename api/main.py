@@ -96,13 +96,11 @@ async def save_note(
 @app.post("/users/{username}/notes/chat")
 async def chat_with_notes(
     username: Annotated[str, Path(title="The username to query")],
-    speech_bytes: Annotated[bytes, File()]):
+    query: NoteAddition):
     """Chat with the user's notes."""
 
-    contents = io.BytesIO(speech_bytes)
-    contents.name = 'name.m4a'
-    transcript = await transcribe_audio(contents)
-    result = await queries.note_chat(username, transcript)
+    result = await queries.note_chat(username, query.content)
+    print(result)
     return { "text": result }
 
 
